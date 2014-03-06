@@ -438,27 +438,31 @@ NSString *const SLCoreDataStackErrorDomain = @"SLCoreDataStackErrorDomain";
     context.persistentStoreCoordinator = self.persistentStoreCoordinator;
     context.mergePolicy = self.backgroundThreadMergePolicy;
 
-    [self.observingManagedObjectContexts addPointer:(__bridge void *)context];
-
+    @synchronized(self.observingManagedObjectContexts) {
+        [self.observingManagedObjectContexts addPointer:(__bridge void *)context];
+    }
+    
     __weak typeof(self) weakSelf = self;
     [context SLCoreDataStack_addDeallocationHandler:^(NSManagedObjectContext *__unsafe_unretained context) {
         __strong typeof(weakSelf) strongSelf = weakSelf;
 
-        NSUInteger index = NSNotFound;
+        @synchronized(self.observingManagedObjectContexts) {
+            NSUInteger index = NSNotFound;
 
-        for (NSUInteger i = 0; i < strongSelf.observingManagedObjectContexts.count; i++) {
-            void *pointer = [strongSelf.observingManagedObjectContexts pointerAtIndex:i];
+            for (NSUInteger i = 0; i < strongSelf.observingManagedObjectContexts.count; i++) {
+                void *pointer = [strongSelf.observingManagedObjectContexts pointerAtIndex:i];
 
-            if (pointer == (__bridge void *)context) {
-                index = i;
-                break;
+                if (pointer == (__bridge void *)context) {
+                    index = i;
+                    break;
+                }
+            }
+
+            if (index != NSNotFound) {
+                [strongSelf.observingManagedObjectContexts removePointerAtIndex:index];
             }
         }
-
-        if (index != NSNotFound) {
-            [strongSelf.observingManagedObjectContexts removePointerAtIndex:index];
-        }
-
+        
         [[NSNotificationCenter defaultCenter] removeObserver:self name:NSManagedObjectContextDidSaveNotification object:context];
     }];
 
@@ -483,9 +487,11 @@ NSString *const SLCoreDataStackErrorDomain = @"SLCoreDataStackErrorDomain";
         [observingManagedObjectsContexts addObject:backgroundThreadManagedObjectContext];
     }
 
-    for (NSManagedObjectContext *context in self.observingManagedObjectContexts) {
-        if (context) {
-            [observingManagedObjectsContexts addObject:context];
+    @synchronized(self.observingManagedObjectContexts) {
+        for (NSManagedObjectContext *context in self.observingManagedObjectContexts) {
+            if (context) {
+                [observingManagedObjectsContexts addObject:context];
+            }
         }
     }
 
