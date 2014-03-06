@@ -37,12 +37,12 @@ enum {
 
 @interface SLCoreDataStack : NSObject
 
-@property (nonatomic, strong) NSManagedObjectModel *managedObjectModel;
-@property (nonatomic, strong) NSPersistentStoreCoordinator *persistentStoreCoordinator;
-@property (nonatomic, readonly) NSString *storeType;
+@property (strong) NSManagedObjectModel *managedObjectModel;
+@property (strong) NSPersistentStoreCoordinator *persistentStoreCoordinator;
+@property (readonly) NSString *storeType;
 
-@property (nonatomic, strong) NSManagedObjectContext *mainThreadManagedObjectContext;
-@property (nonatomic, strong) NSManagedObjectContext *backgroundThreadManagedObjectContext;
+@property (strong) NSManagedObjectContext *mainThreadManagedObjectContext;
+@property (strong) NSManagedObjectContext *backgroundThreadManagedObjectContext;
 
 /**
  returns a new NSManagedObjectContext instance which is observed by this CoreData stack and automatically merges changes between all other observing contexts. Observation ends iff the NSManagedObjectContext gets dealloced.

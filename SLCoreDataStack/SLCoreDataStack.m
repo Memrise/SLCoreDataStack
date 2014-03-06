@@ -103,12 +103,12 @@ NSString *const SLCoreDataStackErrorDomain = @"SLCoreDataStackErrorDomain";
 
 @interface SLCoreDataStack ()
 
-@property (nonatomic, strong) NSPointerArray *observingManagedObjectContexts;
+@property (strong) NSPointerArray *observingManagedObjectContexts;
 
-@property (nonatomic, readonly) NSURL *_dataStoreRootURL;
-@property (nonatomic, readonly) BOOL requiresMigration;
+@property (readonly) NSURL *_dataStoreRootURL;
+@property (readonly) BOOL requiresMigration;
 
-@property (nonatomic, readonly) NSURL *dataStoreURL;
+@property (readonly) NSURL *dataStoreURL;
 
 @end
 
