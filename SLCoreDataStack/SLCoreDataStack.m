@@ -446,7 +446,7 @@ NSString *const SLCoreDataStackErrorDomain = @"SLCoreDataStackErrorDomain";
     [context SLCoreDataStack_addDeallocationHandler:^(NSManagedObjectContext *__unsafe_unretained context) {
         __strong typeof(weakSelf) strongSelf = weakSelf;
 
-        @synchronized(self.observingManagedObjectContexts) {
+        @synchronized(strongSelf.observingManagedObjectContexts) {
             NSUInteger index = NSNotFound;
 
             for (NSUInteger i = 0; i < strongSelf.observingManagedObjectContexts.count; i++) {
