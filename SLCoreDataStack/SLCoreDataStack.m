@@ -103,6 +103,8 @@ NSString *const SLCoreDataStackErrorDomain = @"SLCoreDataStackErrorDomain";
 
 @interface SLCoreDataStack ()
 
+@property (nonatomic, strong) NSManagedObjectContext *saveContext;
+
 @property (nonatomic, strong) NSPointerArray *observingManagedObjectContexts;
 
 @property (nonatomic, readonly) NSURL *_dataStoreRootURL;
@@ -341,8 +343,8 @@ NSString *const SLCoreDataStackErrorDomain = @"SLCoreDataStackErrorDomain";
 {
     if (!_mainThreadManagedObjectContext) {
         _mainThreadManagedObjectContext = [[NSManagedObjectContext alloc] initWithConcurrencyType:NSMainQueueConcurrencyType];
-        _mainThreadManagedObjectContext.persistentStoreCoordinator = self.persistentStoreCoordinator;
         _mainThreadManagedObjectContext.mergePolicy = self.mainThreadMergePolicy;
+        _mainThreadManagedObjectContext.parentContext = self.saveContext;
         
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_managedObjectContextDidSaveNotificationCallback:) name:NSManagedObjectContextDidSaveNotification object:_mainThreadManagedObjectContext];
     }
@@ -365,8 +367,8 @@ NSString *const SLCoreDataStackErrorDomain = @"SLCoreDataStackErrorDomain";
 {
     if (!_backgroundThreadManagedObjectContext) {
         _backgroundThreadManagedObjectContext = [[NSManagedObjectContext alloc] initWithConcurrencyType:NSPrivateQueueConcurrencyType];
-        _backgroundThreadManagedObjectContext.persistentStoreCoordinator = self.persistentStoreCoordinator;
         _backgroundThreadManagedObjectContext.mergePolicy = self.backgroundThreadMergePolicy;
+        _backgroundThreadManagedObjectContext.parentContext = self.mainThreadManagedObjectContext;
         
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_managedObjectContextDidSaveNotificationCallback:) name:NSManagedObjectContextDidSaveNotification object:_backgroundThreadManagedObjectContext];
     }
@@ -383,6 +385,19 @@ NSString *const SLCoreDataStackErrorDomain = @"SLCoreDataStackErrorDomain";
         
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_managedObjectContextDidSaveNotificationCallback:) name:NSManagedObjectContextDidSaveNotification object:_backgroundThreadManagedObjectContext];
     }
+}
+
+- (NSManagedObjectContext *)saveContext
+{
+    if (!_saveContext) {
+        _saveContext = [[NSManagedObjectContext alloc] initWithConcurrencyType:NSPrivateQueueConcurrencyType];
+        _saveContext.persistentStoreCoordinator = self.persistentStoreCoordinator;
+        _saveContext.mergePolicy = self.backgroundThreadMergePolicy;
+
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_managedObjectContextDidSaveNotificationCallback:) name:NSManagedObjectContextDidSaveNotification object:_saveContext];
+    }
+
+    return _saveContext;
 }
 
 - (NSPersistentStoreCoordinator *)persistentStoreCoordinator
